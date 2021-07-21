@@ -6,6 +6,7 @@ module.exports = class NatSampler {
 
     this._a = null
     this._b = null
+    this._threshold = 0
     this._top = 0
     this._samples = []
   }
@@ -16,6 +17,7 @@ module.exports = class NatSampler {
 
     if (this._samples.length < 32) {
       this.size++
+      this._threshold = this.size - (this.size < 4 ? 0 : this.size < 8 ? 1 : this.size < 12 ? 2 : 3)
       this._samples.push(a, b)
       this._top += 2
     } else {
@@ -30,15 +32,13 @@ module.exports = class NatSampler {
       ob.hits--
     }
 
-    const errors = this.size < 4 ? 0 : this.size < 8 ? 1 : this.size < 12 ? 2 : 3
-
     if (this._a === null || this._a.hits < a.hits) this._a = a
     if (this._b === null || this._b.hits < b.hits) this._b = b
 
-    if (this._a.hits + errors >= this.size) {
+    if (this._a.hits >= this._threshold) {
       this.host = this._a.host
       this.port = this._a.port
-    } else if (this._b.hits + errors >= this.size) {
+    } else if (this._b.hits >= this._threshold) {
       this.host = this._b.host
       this.port = 0
     } else {
